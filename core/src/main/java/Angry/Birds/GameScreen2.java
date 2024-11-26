@@ -260,7 +260,7 @@ public class GameScreen2 implements Screen {
 
 
     private void spawnNextBird() {
-        if (birdQueue.isEmpty() || isBirdActive) return;
+
 
         if (birdQueue.isEmpty() ) {
             checkGameEnd();

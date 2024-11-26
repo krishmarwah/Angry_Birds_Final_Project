@@ -10,7 +10,7 @@ import java.util.List;
 public class WoodMaterial {
     private Body body;
     private Texture texture;
-    private int durability; // Durability of the block
+    protected int durability; // Durability of the block
     private boolean markedForDestruction;
     private List<WoodMaterial> supportedBlocks = new ArrayList<>(); // Blocks above this one
 

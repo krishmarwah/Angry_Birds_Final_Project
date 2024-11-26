@@ -32,4 +32,10 @@ public abstract class Pig {
     }
 
 
+    public float getX() {
+        return x;
+    }
+    public float getY() {
+        return y;
+    }
 }

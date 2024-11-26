@@ -12,14 +12,16 @@ public class BasicPig {
     private Texture texture;
     private int durability; // Durability of the block
     private boolean markedForDestruction;
-
+    private World world;
+    private boolean disposed;
 
     public BasicPig(World world, float x, float y) {
         // Load texture
         this.texture = new Texture("basic_pig.png");
-
+        this.world = world;
         // Initialize durability
         this.durability = 1;
+        this.disposed=false;
 
         // Create body definition
         BodyDef bodyDef = new BodyDef();
@@ -69,6 +71,9 @@ public class BasicPig {
             markedForDestruction = true;
         }
     }
+
+
+
     public void handleCollision() {
         markedForDestruction=true;
     }
@@ -108,6 +113,18 @@ public class BasicPig {
         body.setType(BodyDef.BodyType.DynamicBody);
     }
     public void dispose() {
-        texture.dispose();
+        if (!disposed) {
+            texture.dispose();
+            disposed = true;  // Mark the texture as disposed
+        }
     }
+
+    public int getDurability() {
+        return durability;
+    }
+
+    public boolean isDisposed() {
+        return disposed;  // Return the disposed status
+    }
+
 }

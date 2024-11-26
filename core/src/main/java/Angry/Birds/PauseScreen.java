@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.Preferences;
 
 public class PauseScreen implements Screen {
     private int level;
@@ -18,31 +19,33 @@ public class PauseScreen implements Screen {
     private SpriteBatch batch;
     private Texture background;
 
-    // Stage for handling UI elements
     private Stage stage;
-    private GameScreen0 gameScreen; // Reference to the game screen
-    private GameScreen gameScreen1; // Reference to the game screen
+    private GameScreen0 gameScreen;
+    private GameScreen gameScreen1;
+    private GameScreen2 gameScreen2;
 
-    private GameScreen2 gameScreen2; // Reference to the game screen
-
-
-
-    // Buttons as ImageButtons
     private ImageButton restartButton;
     private ImageButton resumeButton;
     private ImageButton exitButton;
     private ImageButton settingsButton;
 
-    public PauseScreen(final Game game,int level,GameScreen0 gameScreen,GameScreen gameScreen1,GameScreen2 gameScreen2) {
-        this.level=level;
+    // Preferences for saving the game state
+    private Preferences prefs;
+
+    public PauseScreen(final Game game, int level, GameScreen0 gameScreen, GameScreen gameScreen1, GameScreen2 gameScreen2) {
+        this.level = level;
         this.game = game;
         this.batch = new SpriteBatch();
-        this.background = new Texture("green1.png"); // Background image
+        this.background = new Texture("green1.png");
         this.stage = new Stage();
-        this.gameScreen=gameScreen;
-        this.gameScreen1=gameScreen1;
-        this.gameScreen2=gameScreen2;
+        this.gameScreen = gameScreen;
+        this.gameScreen1 = gameScreen1;
+        this.gameScreen2 = gameScreen2;
+
         Gdx.input.setInputProcessor(stage);
+
+        // Initialize Preferences for saving the game state
+        prefs = Gdx.app.getPreferences("MyGame");
 
         // Load button textures
         Texture restartTexture = new Texture("restart.png");
@@ -57,12 +60,11 @@ public class PauseScreen implements Screen {
         settingsButton = new ImageButton(new TextureRegionDrawable(settingsTexture));
 
         // Set up button click listeners
-        if (level==0) {
+        if (level == 0) {
             resumeButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    System.out.println("bey");
-                    gameScreen.resumeGame(); // Resume the game
+                    gameScreen.resumeGame();
                     game.setScreen(gameScreen);
                 }
             });
@@ -70,14 +72,14 @@ public class PauseScreen implements Screen {
             restartButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    game.setScreen(new NewPageScreen(game)); // Navigate to NewPageScreen
+                    game.setScreen(new NewPageScreen(game));
                 }
             });
-        }else if(level==1){
+        } else if (level == 1) {
             resumeButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    gameScreen1.resumeGame(); // Resume the game
+                    gameScreen1.resumeGame();
                     game.setScreen(gameScreen1);
                 }
             });
@@ -85,14 +87,14 @@ public class PauseScreen implements Screen {
             restartButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    game.setScreen(new NewPageScreen1(game)); // Navigate to NewPageScreen
+                    game.setScreen(new NewPageScreen1(game));
                 }
             });
-        }else{
+        } else {
             resumeButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    gameScreen2.resumeGame(); // Resume the game
+                    gameScreen2.resumeGame();
                     game.setScreen(gameScreen2);
                 }
             });
@@ -100,7 +102,7 @@ public class PauseScreen implements Screen {
             restartButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    game.setScreen(new NewPageScreen2(game)); // Navigate to NewPageScreen
+                    game.setScreen(new NewPageScreen2(game));
                 }
             });
         }
@@ -108,6 +110,7 @@ public class PauseScreen implements Screen {
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                saveGameState();  // Save the game state before exiting
                 game.setScreen(new HomeScreen(game)); // Navigate to HomeScreen
             }
         });
@@ -125,15 +128,22 @@ public class PauseScreen implements Screen {
         stage.addActor(exitButton);
         stage.addActor(settingsButton);
 
-        // Set button positions to be centered and evenly spaced
+        // Set button positions
         float buttonWidth = resumeButton.getWidth();
-        float centerX = (Gdx.graphics.getWidth() - buttonWidth) / 2; // Center X position
+        float centerX = (Gdx.graphics.getWidth() - buttonWidth) / 2;
 
-        // Adjust vertical positions to display resume at the top
-        resumeButton.setPosition(centerX, 350);   // Resume button at the top
-        restartButton.setPosition(centerX, 300);  // Restart button below
-        exitButton.setPosition(centerX, 250);     // Exit button below restart
-        settingsButton.setPosition(centerX, 200); // Settings button at the bottom
+        resumeButton.setPosition(centerX, 350);
+        restartButton.setPosition(centerX, 300);
+        exitButton.setPosition(centerX, 250);
+        settingsButton.setPosition(centerX, 200);
+    }
+
+    private void saveGameState() {
+        // Example of saving the game state in Preferences
+        prefs.putInteger("level", level);   // Save the current level
+        prefs.putBoolean("isPaused", true);  // Game is paused
+        prefs.putString("lastScreen", "PauseScreen"); // Save the last screen (can be used to return to the game later)
+        prefs.flush();  // Save changes immediately
     }
 
     @Override
@@ -147,13 +157,10 @@ public class PauseScreen implements Screen {
 
         // Begin drawing
         batch.begin();
-
-        // Draw the background image (green.png)
         batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-
         batch.end();
 
-        // Draw the stage (buttons)
+        // Draw the stage
         stage.act(delta);
         stage.draw();
     }

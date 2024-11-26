@@ -251,9 +251,8 @@ public class GameScreen implements Screen {
 
 
     private void spawnNextBird() {
-        if (birdQueue.isEmpty() || isBirdActive) return;
 
-        if (birdQueue.isEmpty() || isBirdActive) {
+        if (birdQueue.isEmpty()) {
             checkGameEnd();
             return;
         }
@@ -270,9 +269,6 @@ public class GameScreen implements Screen {
             isBirdActive = true; // Mark the bird as active
         });
     }
-
-
-
 
     private void createBird(String birdType) {
         BodyDef birdDef = new BodyDef();
@@ -571,8 +567,6 @@ public class GameScreen implements Screen {
             }
         }
         armoredPigs.removeAll(toRemov);
-
-
     }
 
 
@@ -608,6 +602,5 @@ public class GameScreen implements Screen {
         for (Pig pig : pigs) {
             pig.dispose();
         }
-
     }
 }

@@ -2,9 +2,10 @@ package Angry.Birds;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import java.io.Serializable;
 
 // Base Bird Class
-public abstract class Bird {
+public abstract class Bird implements Serializable {
     protected Texture texture;
     protected float x, y;  // Bird's position
 
@@ -27,4 +28,18 @@ public abstract class Bird {
     public void draw(SpriteBatch batch, float width, float height) {
         batch.draw(texture, x, y, width, height);  // Draw bird with specified width and height
     }
+
+    public float getX() {
+        return x;
+    }
+    public void setX(float x) {
+        this.x = x;
+    }
+    public float getY() {
+        return y;
+    }
+    public void setY(float y) {
+        this.y = y;
+    }
+
 }

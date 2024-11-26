@@ -10,7 +10,7 @@ import java.util.List;
 public class StoneMaterial {
     private Body body;
     private Texture texture;
-    private int durability; // Durability of the block
+    protected int durability; // Durability of the block
     private boolean markedForDestruction;
 
     public StoneMaterial(World world, float x, float y) {
