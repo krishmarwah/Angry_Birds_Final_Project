@@ -9,12 +9,21 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class GameScreen implements Screen {
+    private ArrayList<Vector2> woodBlockPositions;  // List to store wood block positions
+    private ArrayList<Vector2> glassPositions;  // List to store wood block positions
+    private ArrayList<Vector2> pigPositions;// List to store wood block positions
+    Queue<String> birdarray;
+
+
+
     private int score=0;
     private Game game;
     private SpriteBatch batch;
@@ -87,7 +96,7 @@ public class GameScreen implements Screen {
         // Initialize bird queue
         birdQueue = new LinkedList<>();
         birdQueue.add("RedAngryBird");
-        birdQueue.add("RedAngryBird");
+        birdQueue.add("BlackAngryBird");
         birdQueue.add("BlackAngryBird");
 
         // Spawn the first bird
@@ -106,9 +115,80 @@ public class GameScreen implements Screen {
         // Stop animations, timers, or any active processes
     }
 
+    public static void flushDataFromFile(String filePath) {
+        try (FileWriter writer = new FileWriter(filePath, false)) {
+            // Opening in write mode without writing anything clears the file
+            System.out.println("File contents cleared: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to clear the file: " + filePath);
+        }
+    }
+
     public void resumeGame() {
         isPaused = false;
         // Resume animations, timers, etc.
+    }
+
+    public void loadGameState() {
+        try {
+            // Open the saved game state file
+            FileInputStream fileInputStream = new FileInputStream("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt");
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+
+            // Load wood block positions from saved state
+            System.out.println("hello sir");
+            woodBlockPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            glassPositions= (ArrayList<Vector2>) objectInputStream.readObject();
+            pigPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            birdarray=(Queue<String>) objectInputStream.readObject();
+            System.out.println("hello sir");
+
+
+            // Close the file stream after reading
+            objectInputStream.close();
+            fileInputStream.close();
+
+            Gdx.app.log("Load", "Game state loaded successfully.");
+
+            // Clear the existing wood blocks array
+            woodBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : woodBlockPositions) {
+                woodBlocks.add(new WoodMaterial(world, position.x, position.y));
+            }
+
+            glassBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : glassPositions) {
+                glassBlocks.add(new GlassMaterial(world, position.x, position.y));
+            }
+
+            pigs.clear();
+
+            // Create pigs based on loaded positions
+            for (Vector2 position : pigPositions) {
+                armoredPigs.add(new ArmoredPig(world, position.x, position.y)); // Assuming Pig is your class for pigs
+            }
+
+            birdQueue.clear();
+            for(String position : birdarray){
+                birdQueue.add(position);
+            }
+
+        } catch (Exception e) {
+            Gdx.app.log("Error", "Error loading game state: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isFileEmpty(String filePath) {
+        File file = new File(filePath);
+
+        // Check if the file exists and if its length is greater than 0
+        return file.exists() && file.length() == 0;
     }
 
     private void createGround() {
@@ -190,6 +270,8 @@ public class GameScreen implements Screen {
                 }
             }
 
+
+
             private boolean isBirdOrMaterial(Body body) {
                 // Check if the body is a bird, wood, or glass
                 if (body == birdBody) return true;
@@ -223,9 +305,61 @@ public class GameScreen implements Screen {
         }
     }
 
+    public List<Vector2> getWoodBlockPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (WoodMaterial wood : woodBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+    public List<Vector2> glassPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (GlassMaterial wood : glassBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+    public List<Vector2> getpigPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (ArmoredPig pi : armoredPigs) {
+            if (pi.getBody() != null) {
+                positions.add(pi.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+
+    public Queue<String> getBirdQueue() {
+        Queue<String> positions = new LinkedList<>();
+        for (String pi : birdQueue) {
+            System.out.println(pi);
+            positions.add(pi);
+        }
+        return positions;
+    }
+
     private void goToWinPage() {
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt");
+        HomeScreen.level=2;
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\level_no.txt");
+        saveLevel("C:\\Users\\DELL\\Desktop\\level_no.txt");
         // Logic to transition to the win page
+        LosePage.keys=1;
         game.setScreen(new WinPage(game,2)); // Assuming WinPageScreen is implemented
+    }
+
+    public static void saveLevel(String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(String.valueOf(2)); // Convert level to string and write
+            System.out.println("Level saved to " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to save the level.");
+        }
     }
 
     private void checkGameEnd() {
@@ -234,7 +368,8 @@ public class GameScreen implements Screen {
         }
     }
     private void goToLosePage() {
-        game.setScreen(new LosePage(game,1)); // Assuming LosePage class is implemented
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt");
+        game.setScreen(new LosePage(game,1,null,this,null)); // Assuming LosePage class is implemented
     }
 
 
@@ -300,65 +435,87 @@ public class GameScreen implements Screen {
         birdBody.setAwake(false);
     }
 
-    private void createLevel() {
-        float blockWidth = 50;
-        float blockHeight = 20;
-        float startX = Gdx.graphics.getWidth() / 2 - blockWidth / 2 + 130;
-        float startY = 100;
-        int numVerticalBlocks = 4;
-        int numHorizontalBlocks = 5;
-        int triangleRows = 3;
-
-        // Left vertical stack
-        for (int i = 0; i < numVerticalBlocks; i++) {
-            woodBlocks.add(new WoodMaterial(world, startX, startY + i * blockHeight));
-        }
-
-        // Horizontal layer
-        float horizontalStartX = startX - blockWidth;
-        float horizontalStartY = startY + numVerticalBlocks * blockHeight;
-        for (int i = 0; i < numHorizontalBlocks; i++) {
-            if (i == 0) continue;
-            woodBlocks.add(new WoodMaterial(world, horizontalStartX + i * blockWidth, horizontalStartY));
-        }
-
-        // Right vertical stack
-        float rightVerticalStartX = horizontalStartX + (numHorizontalBlocks -1) * blockWidth;
-        float rightVerticalStartY = startY;
-        for (int i = 0; i < numVerticalBlocks; i++) {
-            woodBlocks.add(new WoodMaterial(world, rightVerticalStartX, rightVerticalStartY + i * blockHeight));
-        }
-
-        // Central vertical support pillar
-        float supportStartX = startX + blockWidth / 2 + 10; // Adjust position as needed
-        float supportStartY = startY;
-        for (int i = 0; i < numVerticalBlocks ; i++) { // Extend pillar to support horizontal layer
-            woodBlocks.add(new WoodMaterial(world, supportStartX+blockWidth/2+17, supportStartY + i * blockHeight));
-        }
-
-
-        // Triangular region (Glass blocks - assuming you have a GlassMaterial class)
-        float triangleBaseStartX = horizontalStartX + 50;
-        float triangleBaseStartY = horizontalStartY + blockHeight;
-        for (int row = 0; row < triangleRows; row++) {
-            int blocksInRow = numHorizontalBlocks -1 - row;
-            float rowStartX = triangleBaseStartX + (row * blockWidth) / 2;
-            float rowStartY = triangleBaseStartY + row * blockHeight;
-
-            for (int col = 0; col < blocksInRow; col++) {
-                if (row == 0 && (col == 1 || col == 2)) continue;
-                if (row == 1 && col == 1) continue;
-                float x = rowStartX + col * blockWidth;
-                float y = rowStartY;
-                glassBlocks.add(new GlassMaterial(world, x, y));
+    public static boolean hasMoreThanTenCharacters(String filePath) {
+        try (FileReader reader = new FileReader(filePath)) {
+            int count = 0;
+            int character;
+            while ((character = reader.read()) != -1) {
+                count++;
+                if (count > 10) {
+                    return true; // Return true as soon as we find more than 10 characters
+                }
             }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
         }
-
-
-        float pigX = startX + (blockWidth )  ; // Adjust to center in triangle
-        float pigY = startY + (triangleRows * blockHeight)+10; //Adjust to center
-        armoredPigs.add(new ArmoredPig(world, pigX+10, pigY+15)); //Add to armoredPigs list
+        return false; // Return false if the file has 10 or fewer characters
     }
+
+    private void createLevel() {
+        if (!isFileEmpty("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt") && hasMoreThanTenCharacters("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt")) {
+            loadGameState();
+        } else {
+            float blockWidth = 50;
+            float blockHeight = 20;
+            float startX = Gdx.graphics.getWidth() / 2 - blockWidth / 2 + 130;
+            float startY = 100;
+            int numVerticalBlocks = 4;
+            int numHorizontalBlocks = 5;
+            int triangleRows = 3;
+
+            // Left vertical stack
+            for (int i = 0; i < numVerticalBlocks; i++) {
+                woodBlocks.add(new WoodMaterial(world, startX, startY + i * blockHeight));
+            }
+
+            // Horizontal layer
+            float horizontalStartX = startX - blockWidth;
+            float horizontalStartY = startY + numVerticalBlocks * blockHeight;
+            for (int i = 0; i < numHorizontalBlocks; i++) {
+                if (i == 0) continue;
+                woodBlocks.add(new WoodMaterial(world, horizontalStartX + i * blockWidth, horizontalStartY));
+            }
+
+            // Right vertical stack
+            float rightVerticalStartX = horizontalStartX + (numHorizontalBlocks - 1) * blockWidth;
+            float rightVerticalStartY = startY;
+            for (int i = 0; i < numVerticalBlocks; i++) {
+                woodBlocks.add(new WoodMaterial(world, rightVerticalStartX, rightVerticalStartY + i * blockHeight));
+            }
+
+            // Central vertical support pillar
+            float supportStartX = startX + blockWidth / 2 + 10; // Adjust position as needed
+            float supportStartY = startY;
+            for (int i = 0; i < numVerticalBlocks; i++) { // Extend pillar to support horizontal layer
+                woodBlocks.add(new WoodMaterial(world, supportStartX + blockWidth / 2 + 17, supportStartY + i * blockHeight));
+            }
+
+
+            // Triangular region (Glass blocks - assuming you have a GlassMaterial class)
+            float triangleBaseStartX = horizontalStartX + 50;
+            float triangleBaseStartY = horizontalStartY + blockHeight;
+            for (int row = 0; row < triangleRows; row++) {
+                int blocksInRow = numHorizontalBlocks - 1 - row;
+                float rowStartX = triangleBaseStartX + (row * blockWidth) / 2;
+                float rowStartY = triangleBaseStartY + row * blockHeight;
+
+                for (int col = 0; col < blocksInRow; col++) {
+                    if (row == 0 && (col == 1 || col == 2)) continue;
+                    if (row == 1 && col == 1) continue;
+                    float x = rowStartX + col * blockWidth;
+                    float y = rowStartY;
+                    glassBlocks.add(new GlassMaterial(world, x, y));
+                }
+            }
+
+
+            float pigX = startX + (blockWidth); // Adjust to center in triangle
+            float pigY = startY + (triangleRows * blockHeight) + 10; //Adjust to center
+            armoredPigs.add(new ArmoredPig(world, pigX + 10, pigY + 15)); //Add to armoredPigs list
+        }
+    }
+
+
 
 
 

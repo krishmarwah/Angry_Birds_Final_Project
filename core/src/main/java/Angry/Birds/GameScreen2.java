@@ -11,12 +11,19 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class GameScreen2 implements Screen {
+    private ArrayList<Vector2> woodBlockPositions;  // List to store wood block positions
+    private ArrayList<Vector2> glassPositions;  // List to store wood block positions
+    private ArrayList<Vector2> stonePositions;
+    private ArrayList<Vector2> pigPositions;// List to store wood block positions
+    Queue<String> birdarray;
+
     private int score=0;
     private Game game;
     private SpriteBatch batch;
@@ -58,6 +65,114 @@ public class GameScreen2 implements Screen {
     private Vector2 leftAnchor; // Left end of the catapult
     private Vector2 rightAnchor; // Right end of the catapult
 
+
+    public void loadGameState() {
+        try {
+            // Open the saved game state file
+            FileInputStream fileInputStream = new FileInputStream("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt");
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+
+            // Load wood block positions from saved state
+            woodBlockPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            glassPositions= (ArrayList<Vector2>) objectInputStream.readObject();
+            stonePositions=(ArrayList<Vector2>) objectInputStream.readObject();
+            pigPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            birdarray=(Queue<String>) objectInputStream.readObject();
+
+
+
+            // Close the file stream after reading
+            objectInputStream.close();
+            fileInputStream.close();
+
+            Gdx.app.log("Load", "Game state loaded successfully.");
+
+            // Clear the existing wood blocks array
+            woodBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : woodBlockPositions) {
+                woodBlocks.add(new WoodMaterial(world, position.x, position.y));
+            }
+
+            glassBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : glassPositions) {
+                glassBlocks.add(new GlassMaterial(world, position.x, position.y));
+            }
+
+            stoneBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : stonePositions) {
+                stoneBlocks.add(new StoneMaterial(world, position.x, position.y));
+            }
+
+            pigs.clear();
+
+            // Create pigs based on loaded positions
+            for (Vector2 position : pigPositions) {
+                kingPigs.add(new KingPig(world, position.x, position.y)); // Assuming Pig is your class for pigs
+            }
+
+            birdQueue.clear();
+            for(String position : birdarray){
+                birdQueue.add(position);
+            }
+
+        } catch (Exception e) {
+            Gdx.app.log("Error", "Error loading game state: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public List<Vector2> getWoodBlockPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (WoodMaterial wood : woodBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+    public List<Vector2> glassPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (GlassMaterial wood : glassBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+
+    public List<Vector2> getstonepositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (StoneMaterial wood : stoneBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+    public List<Vector2> getpigPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (KingPig pi : kingPigs) {
+            if (pi.getBody() != null) {
+                positions.add(pi.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+
+    public Queue<String> getBirdQueue() {
+        Queue<String> positions = new LinkedList<>();
+        for (String pi : birdQueue) {
+            System.out.println(pi);
+            positions.add(pi);
+        }
+        return positions;
+    }
 
 
     public GameScreen2(Game game) {
@@ -128,6 +243,13 @@ public class GameScreen2 implements Screen {
 
         groundBody.createFixture(groundShape, 0.0f);
         groundShape.dispose();
+    }
+
+    public boolean isFileEmpty(String filePath) {
+        File file = new File(filePath);
+
+        // Check if the file exists and if its length is greater than 0
+        return file.exists() && file.length() == 0;
     }
 
     private void setupCollisionListener() {
@@ -234,6 +356,8 @@ public class GameScreen2 implements Screen {
     }
     private void goToWinPage() {
         // Logic to transition to the win page
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt");
+
         game.setScreen(new WinPage(game,2)); // Assuming WinPageScreen is implemented
     }
     private void checkGameEnd() {
@@ -242,7 +366,18 @@ public class GameScreen2 implements Screen {
         }
     }
     private void goToLosePage() {
-        game.setScreen(new LosePage(game,2)); // Assuming LosePage class is implemented
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt");
+
+        game.setScreen(new LosePage(game,2,null,null,null)); // Assuming LosePage class is implemented
+    }
+    public static void flushDataFromFile(String filePath) {
+        try (FileWriter writer = new FileWriter(filePath, false)) {
+            // Opening in write mode without writing anything clears the file
+            System.out.println("File contents cleared: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to clear the file: " + filePath);
+        }
     }
 
 
@@ -303,84 +438,105 @@ public class GameScreen2 implements Screen {
         birdBody.setAwake(false);
     }
 
+    public static boolean hasMoreThanTenCharacters(String filePath) {
+        try (FileReader reader = new FileReader(filePath)) {
+            int count = 0;
+            int character;
+            while ((character = reader.read()) != -1) {
+                count++;
+                if (count > 10) {
+                    return true; // Return true as soon as we find more than 10 characters
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        return false; // Return false if the file has 10 or fewer characters
+    }
+
     private void createLevel() {
-        // Dimensions for the blocks
-        float blockWidth = 50;
-        float blockHeight = 20;
+        if (!isFileEmpty("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt") && hasMoreThanTenCharacters("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt")) {
+            loadGameState();
+        } else {
 
-        // Starting position for the inverted triangle of wooden blocks
-        float baseX = Gdx.graphics.getWidth() / 2 - blockWidth * 1.5f; // Center horizontally
-        float baseY = 75; // Base position for the wooden material
+            // Dimensions for the blocks
+            float blockWidth = 50;
+            float blockHeight = 20;
 
-        // Number of rows for the inverted triangle
-        int triangleRows = 3;
+            // Starting position for the inverted triangle of wooden blocks
+            float baseX = Gdx.graphics.getWidth() / 2 - blockWidth * 1.5f; // Center horizontally
+            float baseY = 75; // Base position for the wooden material
 
-        // Create the inverted triangle of WoodenMaterial blocks
-        for (int row = 0; row < triangleRows; row++) {
-            // Calculate the number of blocks in the current row
-            int blocksInRow = row + 1;
+            // Number of rows for the inverted triangle
+            int triangleRows = 3;
 
-            // Calculate the starting X position for this row
-            float rowStartX = baseX - (row * blockWidth) / 2;
+            // Create the inverted triangle of WoodenMaterial blocks
+            for (int row = 0; row < triangleRows; row++) {
+                // Calculate the number of blocks in the current row
+                int blocksInRow = row + 1;
 
-            // Calculate the Y position for this row
-            float rowY = baseY + row * blockHeight;
+                // Calculate the starting X position for this row
+                float rowStartX = baseX - (row * blockWidth) / 2;
 
-            for (int col = 0; col < blocksInRow; col++) {
-                if(row==2 && col==1){
-                    continue;
+                // Calculate the Y position for this row
+                float rowY = baseY + row * blockHeight;
+
+                for (int col = 0; col < blocksInRow; col++) {
+                    if (row == 2 && col == 1) {
+                        continue;
+                    }
+                    float x = rowStartX + col * blockWidth + 250; // Position blocks side by side
+                    float y = rowY + 30;
+
+                    // Add the WoodenMaterial block
+                    woodBlocks.add(new WoodMaterial(world, x, y));
                 }
-                float x = rowStartX + col * blockWidth+250; // Position blocks side by side
-                float y = rowY+30;
-
-                // Add the WoodenMaterial block
-                woodBlocks.add(new WoodMaterial(world, x, y));
             }
-        }
 
-        // Starting position for the GlassMaterial blocks (on top of the wooden triangle)
-        float glassBaseY = baseY + triangleRows * blockHeight; // Place above the wooden triangle
+            // Starting position for the GlassMaterial blocks (on top of the wooden triangle)
+            float glassBaseY = baseY + triangleRows * blockHeight; // Place above the wooden triangle
 
-        // Create the triangle of GlassMaterial blocks
-        for (int row = 0; row < triangleRows; row++) {
-            // Calculate the number of blocks in the current row
-            int blocksInRow = triangleRows - row;
+            // Create the triangle of GlassMaterial blocks
+            for (int row = 0; row < triangleRows; row++) {
+                // Calculate the number of blocks in the current row
+                int blocksInRow = triangleRows - row;
 
-            // Calculate the starting X position for this row
-            float rowStartX = baseX + (row * (blockWidth+5)) / 2;
+                // Calculate the starting X position for this row
+                float rowStartX = baseX + (row * (blockWidth + 5)) / 2;
 
-            // Calculate the Y position for this row
-            float rowY = glassBaseY + row * (blockHeight+5);
+                // Calculate the Y position for this row
+                float rowY = glassBaseY + row * (blockHeight + 5);
 
-            for (int col = 0; col < blocksInRow; col++) {
-                if (row == 0 && col == 1) {
-                    continue; // Skip the center block of the top row
+                for (int col = 0; col < blocksInRow; col++) {
+                    if (row == 0 && col == 1) {
+                        continue; // Skip the center block of the top row
+                    }
+                    float x = rowStartX + col * (blockWidth + 5) + 200; // Position blocks side by side
+                    float y = rowY + 30;
+
+                    // Add the GlassMaterial block
+                    glassBlocks.add(new GlassMaterial(world, x, y));
                 }
-                float x = rowStartX + col * (blockWidth+5)+200; // Position blocks side by side
-                float y = rowY+30;
-
-                // Add the GlassMaterial block
-                glassBlocks.add(new GlassMaterial(world, x, y));
             }
-        }
-        // Extend the GlassMaterial blocks diagonally to form complete triangles
-        for (int row = 0; row < 2; row++) {
-            float x = baseX - (row + 1) * blockWidth / 2 + 373; // Adjust left diagonal X position
-            float y = baseY + (triangleRows + row) * blockHeight -30; // Adjust Y position
-            stoneBlocks.add(new StoneMaterial(world, x, y));
-        }
+            // Extend the GlassMaterial blocks diagonally to form complete triangles
+            for (int row = 0; row < 2; row++) {
+                float x = baseX - (row + 1) * blockWidth / 2 + 373; // Adjust left diagonal X position
+                float y = baseY + (triangleRows + row) * blockHeight - 30; // Adjust Y position
+                stoneBlocks.add(new StoneMaterial(world, x, y));
+            }
 
-        // Right diagonal of GlassMaterial
-        for (int row = 0; row < 2; row++) {
-            float x = baseX + (triangleRows + row) * blockWidth / 2 + 75; // Adjust right diagonal X position
-            float y = baseY + (triangleRows + row) * blockHeight -30; // Adjust Y position
-            stoneBlocks.add(new StoneMaterial(world, x, y));
-        }
-        float kingPigX = baseX + blockWidth * ((triangleRows)/ 2f) ; //Center horizontally
-        float kingPigY = baseY + (triangleRows * blockHeight);//Center vertically
-        System.out.println(kingPigY);
-        kingPigs.add(new KingPig(world, kingPigX+162, kingPigY-9.8f));//Add to kingPigs list
+            // Right diagonal of GlassMaterial
+            for (int row = 0; row < 2; row++) {
+                float x = baseX + (triangleRows + row) * blockWidth / 2 + 75; // Adjust right diagonal X position
+                float y = baseY + (triangleRows + row) * blockHeight - 30; // Adjust Y position
+                stoneBlocks.add(new StoneMaterial(world, x, y));
+            }
+            float kingPigX = baseX + blockWidth * ((triangleRows) / 2f); //Center horizontally
+            float kingPigY = baseY + (triangleRows * blockHeight);//Center vertically
+            System.out.println(kingPigY);
+            kingPigs.add(new KingPig(world, kingPigX + 162, kingPigY - 9.8f));//Add to kingPigs list
 
+        }
     }
 
 

@@ -9,48 +9,56 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class GameScreen0 implements Screen {
-    private Game game;
-    private SpriteBatch batch;
-    private ShapeRenderer shapeRenderer; // For drawing shapes like the rope and trajectory
-    private Texture redBirdTexture;
-    private Texture blackBirdTexture;
-    private Texture blueBirdTexture;
-    private Texture background;
-    private Texture catapult;
-    private Texture pauseButton;
-    private boolean isPaused = false;
+public class GameScreen0 implements Screen, Serializable {
 
-    private Texture basicPigTexture;
-    private List<Pig> pigs; // Store all pigs
+    private ArrayList<Vector2> woodBlockPositions;  // List to store wood block positions
+    private ArrayList<Vector2> pigPositions;// List to store wood block positions
+    Queue<String> birdarray;
 
 
-    private World world; // Box2D world
-    private Body birdBody; // Bird physics body
-    private Body groundBody; // Ground physics body
+    private transient Game game;
+    private transient SpriteBatch batch;
+    private transient ShapeRenderer shapeRenderer; // For drawing shapes like the rope and trajectory
+    private transient Texture redBirdTexture;
+    private transient Texture blackBirdTexture;
+    private transient Texture blueBirdTexture;
+    private transient Texture background;
+    private transient Texture catapult;
+    private transient Texture pauseButton;
+    private transient boolean isPaused = false;
 
-    private boolean dragging = false; // To check if bird is being dragged
-    private Vector2 initialPosition; // Bird's initial position
-    private Vector2 launchVelocity = new Vector2(); // Initial velocity to be applied
+    private transient Texture basicPigTexture;
+    private transient List<Pig> pigs; // Store all pigs
 
-    private Vector2 catapultAnchor; // Anchor point of the catapult
 
-    private List<WoodMaterial> woodBlocks;// List to store wood blocks
-    private List<BasicPig> pig;
-    private Queue<String> birdQueue; // Queue to manage birds in sequence
-    private boolean isBirdActive = false;
+    private transient World world; // Box2D world
+    private transient Body birdBody; // Bird physics body
+    private transient Body groundBody; // Ground physics body
 
-    private Vector2 ropeEnd; // The dynamic endpoint of the rope during dragging
-    private float maxStretch = 50f; // Maximum stretch distance
-    private Vector2 leftAnchor; // Left end of the catapult
-    private Vector2 rightAnchor; // Right end of the catapult
+    private transient boolean dragging = false; // To check if bird is being dragged
+    private transient Vector2 initialPosition; // Bird's initial position
+    private transient Vector2 launchVelocity = new Vector2(); // Initial velocity to be applied
 
-    private int score = 0;
+    private transient Vector2 catapultAnchor; // Anchor point of the catapult
+
+    private transient List<WoodMaterial> woodBlocks;// List to store wood blocks
+    private transient List<BasicPig> pig;
+    private transient Queue<String> birdQueue; // Queue to manage birds in sequence
+    private transient boolean isBirdActive = false;
+
+    private transient Vector2 ropeEnd; // The dynamic endpoint of the rope during dragging
+    private transient float maxStretch = 50f; // Maximum stretch distance
+    private transient Vector2 leftAnchor; // Left end of the catapult
+    private transient Vector2 rightAnchor; // Right end of the catapult
+
+    private transient int score = 0;
 
 
     public GameScreen0(Game game) {
@@ -102,6 +110,105 @@ public class GameScreen0 implements Screen {
         setupCollisionListener();
     }
 
+    private void saveWoodBlockPositions() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("wood_positions.dat"))) {
+            List<Vector2> positions = new ArrayList<>();
+            for (WoodMaterial wood : woodBlocks) {
+                positions.add(wood.getBody().getPosition());
+            }
+            out.writeObject(positions);
+            System.out.println("Wood block positions saved!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadGameState() {
+        try {
+            // Open the saved game state file
+            FileInputStream fileInputStream = new FileInputStream("C:\\Users\\DELL\\Desktop\\save_game_state.txt");
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+
+            // Load wood block positions from saved state
+            woodBlockPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            pigPositions = (ArrayList<Vector2>) objectInputStream.readObject();
+            birdarray=(Queue<String>) objectInputStream.readObject();
+
+
+            // Close the file stream after reading
+            objectInputStream.close();
+            fileInputStream.close();
+
+            Gdx.app.log("Load", "Game state loaded successfully.");
+
+            // Clear the existing wood blocks array
+            woodBlocks.clear();
+
+            // Create wood blocks based on loaded positions
+            for (Vector2 position : woodBlockPositions) {
+                woodBlocks.add(new WoodMaterial(world, position.x, position.y));
+            }
+
+            pigs.clear();
+
+            // Create pigs based on loaded positions
+            for (Vector2 position : pigPositions) {
+                pig.add(new BasicPig(world, position.x, position.y)); // Assuming Pig is your class for pigs
+            }
+
+            birdQueue.clear();
+            for(String position : birdarray){
+                birdQueue.add(position);
+            }
+
+        } catch (Exception e) {
+            Gdx.app.log("Error", "Error loading game state: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public List<Vector2> getWoodBlockPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (WoodMaterial wood : woodBlocks) {
+            if (wood.getBody() != null) {
+                positions.add(wood.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+    public List<Vector2> getpigPositions() {
+        List<Vector2> positions = new ArrayList<>();
+        for (BasicPig pi : pig) {
+            if (pi.getBody() != null) {
+                positions.add(pi.getBody().getPosition().cpy()); // Get and copy the position to avoid modifications
+            }
+        }
+        return positions;
+    }
+
+    public Queue<String> getBirdQueue() {
+        Queue<String> positions = new LinkedList<>();
+        for (String pi : birdQueue) {
+            System.out.println(pi);
+            positions.add(pi);
+        }
+        return positions;
+    }
+
+    private void loadWoodBlockPositions() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("wood_positions.dat"))) {
+            List<Vector2> positions = (List<Vector2>) in.readObject();
+            for (int i = 0; i < woodBlocks.size(); i++) {
+                woodBlocks.get(i).getBody().setTransform(positions.get(i), woodBlocks.get(i).getBody().getAngle());
+            }
+            System.out.println("Wood block positions loaded!");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     public void pauseGame() {
         isPaused = true;
         // Stop animations, timers, or any active processes
@@ -126,6 +233,27 @@ public class GameScreen0 implements Screen {
 
         groundShape.dispose();
     }
+
+    private void saveGameState() {
+        try (FileOutputStream fileOut = new FileOutputStream("C:\\Users\\DELL\\Desktop\\save_game_state.txt");
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+
+            // Save the positions of objects in GameScreen0 (example for level 0)
+            if ( this != null) {
+                objectOut.writeObject(this.getWoodBlockPositions());// Save wood block positions
+                objectOut.writeObject(this.getpigPositions());
+                objectOut.writeObject(this.getBirdQueue());
+            }
+
+            Gdx.app.log("Save", "Game state saved successfully!");
+        } catch (Exception ex) {
+            Gdx.app.log("Save", "Error saving game state: " + ex.getMessage());
+        }
+
+
+    }
+
+
 
     private void setupCollisionListener() {
         world.setContactListener(new ContactListener() {
@@ -211,16 +339,47 @@ public class GameScreen0 implements Screen {
     }
     private void goToWinPage() {
         // Logic to transition to the win page
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state.txt");
+        flushDataFromFile("C:\\Users\\DELL\\Desktop\\level_no.txt");
+        saveLevel("C:\\Users\\DELL\\Desktop\\level_no.txt");
+        LosePage.keys=1;
+        HomeScreen.level=1;
+
         game.setScreen(new WinPage(game,1)); // Assuming WinPageScreen is implemented
+    }
+
+    public static void saveLevel(String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(String.valueOf(1)); // Convert level to string and write
+            System.out.println("Level saved to " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to save the level.");
+        }
+    }
+
+    public static void flushDataFromFile(String filePath) {
+        try (FileWriter writer = new FileWriter(filePath, false)) {
+            // Opening in write mode without writing anything clears the file
+            System.out.println("File contents cleared: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to clear the file: " + filePath);
+        }
     }
 
     private void checkGameEnd() {
         if (score < 500) {
+            if(LosePage.keys==0){
+            flushDataFromFile("C:\\Users\\DELL\\Desktop\\save_game_state.txt");
+            }else{
+                saveGameState();
+            }
             goToLosePage(); // Transition to the lose page
         }
     }
     private void goToLosePage() {
-        game.setScreen(new LosePage(game,0)); // Assuming LosePage class is implemented
+        game.setScreen(new LosePage(game,0,this,null,null)); // Assuming LosePage class is implemented
     }
 
 
@@ -253,6 +412,13 @@ public class GameScreen0 implements Screen {
         });
     }
 
+    public boolean isFileEmpty(String filePath) {
+        File file = new File(filePath);
+
+        // Check if the file exists and if its length is greater than 0
+        return file.exists() && file.length() == 0;
+    }
+
 
 
 
@@ -282,44 +448,64 @@ public class GameScreen0 implements Screen {
         birdBody.setAwake(false);
     }
 
+    public static boolean hasMoreThanTenCharacters(String filePath) {
+        try (FileReader reader = new FileReader(filePath)) {
+            int count = 0;
+            int character;
+            while ((character = reader.read()) != -1) {
+                count++;
+                if (count > 10) {
+                    return true; // Return true as soon as we find more than 10 characters
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        return false; // Return false if the file has 10 or fewer characters
+    }
+
 
 
     private void createLevel() {
-        float blockWidth = 50;
-        float blockHeight = 20;
-        float startX = Gdx.graphics.getWidth() / 2 - blockWidth * 1.5f; // Centered
-        float startY = 100;
-        int numBlocksPerRow = 3;
-        int numBlocksPerColumn = 4;
+          if(!isFileEmpty("C:\\Users\\DELL\\Desktop\\save_game_state.txt") && hasMoreThanTenCharacters("C:\\Users\\DELL\\Desktop\\save_game_state.txt")){
+              loadGameState();
+          }else {
+              float blockWidth = 50;
+              float blockHeight = 20;
+              float startX = Gdx.graphics.getWidth() / 2 - blockWidth * 1.5f; // Centered
+              float startY = 100;
+              int numBlocksPerRow = 3;
+              int numBlocksPerColumn = 4;
 
-        // Create the base layer
-        for (int j = 0; j < numBlocksPerRow; j++) {
-            float x = startX + j * (blockWidth + 1)+150;
-            float y = startY;
-            woodBlocks.add(new WoodMaterial(world, x, y));
-        }
+              // Create the base layer
+              for (int j = 0; j < numBlocksPerRow; j++) {
+                  float x = startX + j * (blockWidth + 1) + 150;
+                  float y = startY;
+                  woodBlocks.add(new WoodMaterial(world, x, y));
+              }
 
-        // Create the middle layer (with the pig)
-        for (int j = 0; j < numBlocksPerRow; j++) {
-            float x = startX + j * (blockWidth + 1)+150;
-            float y = startY + blockHeight + 1;
+              // Create the middle layer (with the pig)
+              for (int j = 0; j < numBlocksPerRow; j++) {
+                  float x = startX + j * (blockWidth + 1) + 150;
+                  float y = startY + blockHeight + 1;
 
-            if (j == 1) { // Place the pig in the center
-                pig.add(new BasicPig(world, x + blockWidth / 2, y + blockHeight / 2));
-            } else {
-                woodBlocks.add(new WoodMaterial(world, x, y));
-            }
-        }
+                  if (j == 1) { // Place the pig in the center
+                      pig.add(new BasicPig(world, x + blockWidth / 2, y + blockHeight / 2));
+                  } else {
+                      woodBlocks.add(new WoodMaterial(world, x, y));
+                  }
+              }
 
-        // Create the top layer (optional)
-        for (int j = 0; j < numBlocksPerRow; j++) {
-            if(j==numBlocksPerRow-1){
-                continue;
-            }
-            float x = startX + j * (blockWidth + 1)+150;
-            float y = startY + 2 * (blockHeight + 1);
-            woodBlocks.add(new WoodMaterial(world, x, y));
-        }
+              // Create the top layer (optional)
+              for (int j = 0; j < numBlocksPerRow; j++) {
+                  if (j == numBlocksPerRow - 1) {
+                      continue;
+                  }
+                  float x = startX + j * (blockWidth + 1) + 150;
+                  float y = startY + 2 * (blockHeight + 1);
+                  woodBlocks.add(new WoodMaterial(world, x, y));
+              }
+          }
 
     }
 

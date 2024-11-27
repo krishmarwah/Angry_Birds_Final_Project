@@ -37,7 +37,7 @@ public class BasicPig {
 
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
-        fixtureDef.density = 0.5f; // Lightweight for wood
+        fixtureDef.density = 1.5f; // Lightweight for wood
         fixtureDef.friction = 10f;
         fixtureDef.restitution = 0.2f;// Minimal bounce
 

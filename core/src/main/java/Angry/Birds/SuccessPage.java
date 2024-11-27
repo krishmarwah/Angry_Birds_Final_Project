@@ -71,7 +71,7 @@ public class SuccessPage implements Screen {
            // Check if the click is inside the retry button bounds
             if (x >= retryButtonX && x <= retryButtonX + 64 && y >= retryButtonY && y <= retryButtonY + 64) {
                 System.out.println("Retry button clicked");
-                game.setScreen(new LosePage(game,0));  // Transition to LosePage
+                game.setScreen(new LosePage(game,0,null,null,null));  // Transition to LosePage
             }
         }
 

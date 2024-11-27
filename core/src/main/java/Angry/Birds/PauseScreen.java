@@ -13,6 +13,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.Preferences;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+
 public class PauseScreen implements Screen {
     private int level;
     private Game game;
@@ -51,7 +54,7 @@ public class PauseScreen implements Screen {
         Texture restartTexture = new Texture("restart.png");
         Texture resumeTexture = new Texture("resume.png");
         Texture exitTexture = new Texture("exit.png");
-        Texture settingsTexture = new Texture("settings.png");
+        Texture settingsTexture = new Texture("save.png");
 
         // Create ImageButtons with the button textures
         resumeButton = new ImageButton(new TextureRegionDrawable(resumeTexture));
@@ -110,7 +113,7 @@ public class PauseScreen implements Screen {
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                saveGameState();  // Save the game state before exiting
+
                 game.setScreen(new HomeScreen(game)); // Navigate to HomeScreen
             }
         });
@@ -119,6 +122,7 @@ public class PauseScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Settings button does nothing for now
+                saveGameState();
             }
         });
 
@@ -138,13 +142,7 @@ public class PauseScreen implements Screen {
         settingsButton.setPosition(centerX, 200);
     }
 
-    private void saveGameState() {
-        // Example of saving the game state in Preferences
-        prefs.putInteger("level", level);   // Save the current level
-        prefs.putBoolean("isPaused", true);  // Game is paused
-        prefs.putString("lastScreen", "PauseScreen"); // Save the last screen (can be used to return to the game later)
-        prefs.flush();  // Save changes immediately
-    }
+
 
     @Override
     public void show() {}
@@ -164,6 +162,59 @@ public class PauseScreen implements Screen {
         stage.act(delta);
         stage.draw();
     }
+
+    private void saveGameState() {
+        try (FileOutputStream fileOut = new FileOutputStream("C:\\Users\\DELL\\Desktop\\save_game_state.txt");
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+
+            // Save the positions of objects in GameScreen0 (example for level 0)
+            if (level == 0 && gameScreen != null) {
+                objectOut.writeObject(gameScreen.getWoodBlockPositions());// Save wood block positions
+                objectOut.writeObject(gameScreen.getpigPositions());
+                objectOut.writeObject(gameScreen.getBirdQueue());
+            }
+
+            Gdx.app.log("Save", "Game state saved successfully!");
+        } catch (Exception ex) {
+            Gdx.app.log("Save", "Error saving game state: " + ex.getMessage());
+        }
+
+        try (FileOutputStream fileOut = new FileOutputStream("C:\\Users\\DELL\\Desktop\\save_game_state_1.txt");
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+
+            // Save the positions of objects in GameScreen0 (example for level 0)
+            if (level == 1 && gameScreen1 != null) {
+                objectOut.writeObject(gameScreen1.getWoodBlockPositions());// Save wood block positions
+                objectOut.writeObject(gameScreen1.glassPositions());
+                objectOut.writeObject(gameScreen1.getpigPositions());
+                objectOut.writeObject(gameScreen1.getBirdQueue());
+            }
+
+            Gdx.app.log("Save", "Game state saved successfully!");
+        } catch (Exception ex) {
+            Gdx.app.log("Save", "Error saving game state: " + ex.getMessage());
+        }
+
+        try (FileOutputStream fileOut = new FileOutputStream("C:\\Users\\DELL\\Desktop\\save_game_state_2.txt");
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+
+            // Save the positions of objects in GameScreen0 (example for level 0)
+            if (level == 2 && gameScreen2 != null) {
+                objectOut.writeObject(gameScreen2.getWoodBlockPositions());// Save wood block positions
+                objectOut.writeObject(gameScreen2.glassPositions());
+                objectOut.writeObject(gameScreen2.getstonepositions());
+                objectOut.writeObject(gameScreen2.getpigPositions());
+                objectOut.writeObject(gameScreen2.getBirdQueue());
+            }
+
+            Gdx.app.log("Save", "Game state saved successfully!");
+        } catch (Exception ex) {
+            Gdx.app.log("Save", "Error saving game state: " + ex.getMessage());
+        }
+    }
+
+
+
 
     @Override
     public void resize(int width, int height) {
