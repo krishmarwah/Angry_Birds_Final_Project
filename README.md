@@ -28,7 +28,7 @@ Clone the repository:
 
 bash
 Copy code
-git clone https://github.com/your-repo/angry-birds-clone.git
+git clone https://github.com/krishmarwah/Angry_Birds_Final_Project
 cd angry-birds-clone
 Import the project into your IDE.
 
