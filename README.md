@@ -112,7 +112,22 @@ Usage: Block and Pig Groups
 Example:
 The woodBlocks, glassBlocks, and armoredPigs lists collectively represent groups of game elements, enabling unified operations (e.g., iterating through them to check for collisions or apply game logic).
 
+Serialization
+Purpose:
+Serialization allows us to save and load the game state (e.g., levels, bird positions, and scores), enabling players to resume gameplay and debugging.
 
+Implementation:
+
+Used the Serializable interface for classes like GameState, Bird, and Material.
+Game state is saved to a file (savegame.ser) using ObjectOutputStream and loaded with ObjectInputStream.
+Non-serializable fields (e.g., Box2D Body objects) are marked as transient and reinitialized during deserialization.
+
+Junit Testing has also been implemeted.
+
+Bonus:
+We have added the following bonus features:
+1.Key system-Grants an extra life upon loosing a particular level.
+2.A Description screen for each level giving information about the level and optimal Srategies to defeat the level.(Also uses Serialisation)
 
 
 Thank You!
