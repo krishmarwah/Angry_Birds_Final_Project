@@ -1,46 +1,57 @@
-apply plugin: "java"
-
-sourceCompatibility = 1.6
-sourceSets.main.java.srcDirs = [ "src/" ]
-
-project.ext.mainClassName = "com.mygdx.game.desktop.DesktopLauncher"
-project.ext.assetsDir = new File("../core/assets");
-
-task run(dependsOn: classes, type: JavaExec) {
-    main = project.mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    standardInput = System.in
-    workingDir = project.assetsDir
-    ignoreExitValue = true
+plugins {
+  id 'java'
+  id 'application'
 }
 
-task dist(type: Jar) {
-    from files(sourceSets.main.output.classesDir)
-    from files(sourceSets.main.output.resourcesDir)
-    from {configurations.compile.collect {zipTree(it)}}
-    from files(project.assetsDir);
- 
-    manifest {
-        attributes 'Main-Class': project.mainClassName
-    }
+apply plugin: 'eclipse'
+
+repositories {
+  mavenCentral()
+  jcenter()
 }
 
-dist.dependsOn classes
+dependencies {
+  // LibGDX dependencies
+  api "com.badlogicgames.ashley:ashley:$ashleyVersion"
+  api "com.badlogicgames.box2dlights:box2dlights:$box2dlightsVersion"
+  api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
+  api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
+  api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx:$gdxVersion"
 
-eclipse {
-    project {
-        name = appName + "-desktop"
-        linkedResource name: 'assets', type: '2', location: 'PARENT-1-PROJECT_LOC/core/assets'
-    }
-}
+  // JUnit dependencies for testing (JUnit 5)
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+  testImplementation 'org.junit.vintage:junit-vintage-engine:5.8.2' // For backward compatibility with JUnit 4
 
-task afterEclipseImport(description: "Post processing after project generation", group: "IDE") {
-  doLast {
-    def classpath = new XmlParser().parse(file(".classpath"))
-    new Node(classpath, "classpathentry", [ kind: 'src', path: 'assets' ]);
-    def writer = new FileWriter(file(".classpath"))
-    def printer = new XmlNodePrinter(new PrintWriter(writer))
-    printer.setPreserveWhitespace(true)
-    printer.print(classpath)
+  // Mockito for mocking
+  testImplementation 'org.mockito:mockito-inline:4.0.0' // To mock final classes
+  testImplementation 'org.mockito:mockito-core:4.0.0'
+  testImplementation 'org.mockito:mockito-inline:4.8.1'  // or the latest version
+
+
+  // PowerMockito dependencies for mocking constructors and static methods
+  testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
+  testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
+
+  // Conditional Graal native dependency
+  if (enableGraalNative == 'true') {
+    implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
 }
+
+test {
+  useJUnitPlatform() // Use JUnit Platform for running tests (JUnit 5)
+  testLogging {
+    events 'passed', 'failed', 'skipped'
+    exceptionFormat 'full'
+  }
+}
+
+// Project name
+eclipse.project.name = appName + '-core'
+
+// Encoding settings
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'

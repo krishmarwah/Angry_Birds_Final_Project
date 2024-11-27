@@ -11,7 +11,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.Screen;
 
 public class StartScreen implements Screen {
-    private Game game;
+    Game game;
     private SpriteBatch batch;
     private Texture background;
     private BitmapFont font;

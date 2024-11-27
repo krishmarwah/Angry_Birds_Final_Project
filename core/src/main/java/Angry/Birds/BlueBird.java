@@ -7,7 +7,11 @@ class BlueBird extends Bird {
 
     @Override
     public void specialAbility() {
-        // Speed boost ability
-        System.out.println("Yellow Bird uses speed boost!");
+        BlueBird.split();
+    }
+
+    // Extracted static method for testing
+    public static void split() {
+        System.out.println("Splits into Three.");
     }
 }

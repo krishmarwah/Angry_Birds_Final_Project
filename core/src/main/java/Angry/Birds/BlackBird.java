@@ -7,28 +7,11 @@ class BlackBird extends Bird {
 
     @Override
     public void specialAbility() {
-        // Explodes on impact
+        BlackBird.explode();
+    }
+
+    // Extracted static method
+    public static void explode() {
         System.out.println("Black Bird explodes on impact!");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
